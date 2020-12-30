@@ -30,3 +30,4 @@ snake
 avocado
 apple
 helicopter
+monitor
