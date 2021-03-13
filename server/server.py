@@ -212,7 +212,7 @@ class Server:
         reads the word list from words.txt
         :return:
         """
-        with open('server/words.txt') as file:
+        with open('words.txt') as file:
             words = file.readlines()
 
         # remove whitespace characters like `\n` at the end of each line

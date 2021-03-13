@@ -1,16 +1,26 @@
 from tkinter import *
 from tkinter.messagebox import showinfo
-from Game import *
+import LoginPage
+import RegisterPage
+import Game
 
 
 class MainMenu(object):
     def __init__(self):
         self.root = Tk()
 
+        self.root.eval('tk::PlaceWindow . center')
+
         self.root.title('DrawPy')
 
         self.start_button = Button(self.root, text='Play', command=self.start, width=10, padx=10, pady=10)
         self.start_button.pack(fill=X, pady=20, padx=80)
+
+        self.login_button = Button(self.root, text='Login', command=self.login, width=10, padx=10, pady=10)
+        self.login_button.pack(fill=X, pady=20, padx=80)
+
+        self.login_button = Button(self.root, text='Register', command=self.register, width=10, padx=10, pady=10)
+        self.login_button.pack(fill=X, pady=20, padx=80)
 
         self.about_button = Button(self.root, text='About', command=self.about, width=10, padx=10, pady=10)
         self.about_button.pack(fill=X, pady=20, padx=80)
@@ -36,7 +46,7 @@ class MainMenu(object):
         :return:
         """
         self.root.withdraw()
-        Game(self.show)
+        Game.Game(self.show)
 
     def show(self):
         """
@@ -51,3 +61,19 @@ class MainMenu(object):
         :return:
         """
         exit()
+
+    def login(self):
+        """
+        opens the login page
+        :return:
+        """
+        self.root.withdraw()
+        LoginPage.LoginPage()
+
+    def register(self):
+        """
+        opens the register page
+        :return:
+        """
+        self.root.withdraw()
+        RegisterPage.RegisterPage()

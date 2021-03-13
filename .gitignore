@@ -1,2 +1,4 @@
 /.idea
 /__pycache__
+server/drawpy.db
+/venv
