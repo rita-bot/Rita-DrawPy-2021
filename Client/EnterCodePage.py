@@ -1,14 +1,14 @@
 from tkinter import *
 from tkinter.messagebox import showinfo
-import Game
+
+import RoomsPage
 
 
 class EnterCodePage(object):
-    def __init__(self, code):
-        self.root = Tk()
-        self.code = code
+    def __init__(self, client):
+        self.client = client
 
-        print(f"The code is: {code}")
+        self.root = Tk()
 
         self.root.eval('tk::PlaceWindow . center')
         self.root.title('Enter two factor auth code')
@@ -29,9 +29,10 @@ class EnterCodePage(object):
 
     def submit_code(self):
         submitted_code = self.code_input.get()
+        (origin, action, args) = self.client.send_and_wait('client_two_factor_code', submitted_code)
 
-        if self.code == submitted_code:
+        if action == 'client_two_factor_code_success':
             self.root.withdraw()
-            Game.Game()
+            RoomsPage.RoomsPage(self.client)
         else:
             showinfo("Wrong code", "The code you entered is incorrect")

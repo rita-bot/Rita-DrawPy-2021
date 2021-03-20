@@ -1,20 +1,18 @@
 from tkinter import *
 from tkinter.messagebox import showinfo
+
 import LoginPage
 import RegisterPage
-import Game
 
 
 class MainMenu(object):
-    def __init__(self):
+    def __init__(self, client):
+        self.client = client
         self.root = Tk()
 
         self.root.eval('tk::PlaceWindow . center')
 
         self.root.title('DrawPy')
-
-        self.start_button = Button(self.root, text='Play', command=self.start, width=10, padx=10, pady=10)
-        self.start_button.pack(fill=X, pady=20, padx=80)
 
         self.login_button = Button(self.root, text='Login', command=self.login, width=10, padx=10, pady=10)
         self.login_button.pack(fill=X, pady=20, padx=80)
@@ -40,14 +38,6 @@ class MainMenu(object):
                                    "built with Python 3 (Tkinter + Sockets)\n"
                                    "Made by Rita Paripsky")
 
-    def start(self):
-        """
-        starts the game
-        :return:
-        """
-        self.root.withdraw()
-        Game.Game(self.show)
-
     def show(self):
         """
         shows the mainmenu window
@@ -68,7 +58,7 @@ class MainMenu(object):
         :return:
         """
         self.root.withdraw()
-        LoginPage.LoginPage()
+        LoginPage.LoginPage(self.client)
 
     def register(self):
         """
@@ -76,4 +66,4 @@ class MainMenu(object):
         :return:
         """
         self.root.withdraw()
-        RegisterPage.RegisterPage()
+        RegisterPage.RegisterPage(self.client)

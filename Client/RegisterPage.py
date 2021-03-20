@@ -1,13 +1,14 @@
 from tkinter import *
 from tkinter.messagebox import showinfo
+
 import MainMenu
-import EnterCodePage
-from server.Database import DatabaseConnection
-from server import TwoFactorAuth
+import LoginPage
 
 
-class LoginPage(object):
-    def __init__(self):
+class RegisterPage(object):
+    def __init__(self, client):
+        self.client = client
+
         self.root = Tk()
 
         self.root.eval('tk::PlaceWindow . center')
@@ -23,7 +24,7 @@ class LoginPage(object):
         self.password_input = Entry(self.root, text='Password')
         self.password_input.grid(row=1, column=1, columnspan=1, padx=10)
 
-        self.login_button = Button(self.root, text='Login', command=self.login, width=10, padx=10, pady=10)
+        self.login_button = Button(self.root, text='Register', command=self.register, width=10, padx=10, pady=10)
         self.login_button.grid(row=2, column=0, columnspan=2, pady=10)
 
         self.about_button = Button(self.root, text='Back', command=self.back, width=10, padx=10, pady=10)
@@ -38,24 +39,20 @@ class LoginPage(object):
         :return:
         """
         self.root.withdraw()
-        MainMenu.MainMenu()
+        MainMenu.MainMenu(self.client)
 
-    def login(self):
+    def register(self):
         """
         shows the mainmenu window
         :return:
         """
-        print("logging in as " + self.email_input.get())
+        print("Registering as " + self.email_input.get())
         email = self.email_input.get()
         password = self.password_input.get()
-        db_connection = DatabaseConnection()
-        result = db_connection.validate_user(email, password)
-        db_connection.close_connection()
+        (origin, action, args) = self.client.send_and_wait('client_register', f"{email}:{password}")
 
-        if result is True:
+        if action == 'client_register_success':
             self.root.withdraw()
-            code = TwoFactorAuth.generate_code()
-            # TODO: send email here
-            EnterCodePage.EnterCodePage(code)
+            LoginPage.LoginPage(self.client)
         else:
-            showinfo("Wrong login credentials", "The email or password you entered are incorrect")
+            showinfo("Registration failed", args)

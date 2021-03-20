@@ -8,11 +8,10 @@ class Game(object):
     DEFAULT_PEN_SIZE = 5.0
     DEFAULT_COLOR = 'blue'
 
-    def __init__(self, on_game_over):
+    def __init__(self, client):
         self.root = Tk()
-        self.on_game_over = on_game_over
-        self.client = Client(self.handle_server_action)
-        self.client.connect('127.0.0.1', 3000)
+        self.client = client
+        self.client.listeners.append(self.handle_server_action)
 
         self.root.title('Drawdipy')
 
@@ -85,12 +84,11 @@ class Game(object):
         """
         self.client.close()
         self.root.destroy()
-        self.on_game_over()
 
     def handle_server_action(self, action, args):
         """
-        handles a message from the server
-        :param action: the action sent from the server
+        handles a message from the Server
+        :param action: the action sent from the Server
         :param args: the action's arguments
         :return:
         """
@@ -136,7 +134,7 @@ class Game(object):
             self.guessing_submit_button.grid()
 
         self.guessing_word_input.delete(0, 'end')
-        self.guessing_word_label['text'] = self.word_to_underscores(word)
+        self.guessing_word_label['text'] = word
 
     def init_drawing_turn(self, word):
         """
@@ -166,24 +164,20 @@ class Game(object):
 
     def game_ended(self, message):
         """
-        ends the game with a win/lose message from the server
+        ends the game with a win/lose message from the Server
         :param message:
         :return:
         """
-        self.client.close()
         showinfo('The Game Ended', message)
-        self.root.destroy()
-        self.on_game_over()
+        self.root.withdraw()
 
     def submit_guess(self):
         """
         checks the guessers guess and handles success/failure
         :return:
         """
-        if self.word == self.guessing_word_input.get():
-            self.client.send('player_guessed_word', str(self.remaining))
-        else:
-            self.guessing_word_input.delete(0, 'end')
+        self.client.send('room:player_guessed_word', self.guessing_word_input.get() + ":" + str(self.remaining))
+        self.guessing_word_input.delete(0, 'end')
 
     def countdown(self, remaining=None):
         """
@@ -202,30 +196,12 @@ class Game(object):
         if self.remaining <= 0:
             self.countdown_label.configure(text="time's up!")
             if self.guessing:
-                self.client.send('player_guessed_word', '0')
+                self.client.send('room:guess_time_is_up')
         else:
             self.countdown_label.configure(text="Time Left: %d" % self.remaining)
             self.remaining = self.remaining - 1
             # call countdown again after 1 second
             self.previous_after = self.root.after(1000, self.countdown)
-
-    def word_to_underscores(self, word):
-        """
-        converts a word to underscores - hello turns to _ _ _ _ _
-        :param word: the word to convert
-        :return:
-        """
-        new_word = ''
-
-        for (index, letter) in enumerate(word):
-            if letter == ' ':
-                new_word += ' '
-            elif index == len(word) - 1:
-                new_word += '_'
-            else:
-                new_word += '_ '
-
-        return new_word
 
     def use_pen(self):
         """
@@ -254,11 +230,11 @@ class Game(object):
 
     def clear_canvas(self):
         """
-        clears the canvas and notifies the server about the clear
+        clears the canvas and notifies the Server about the clear
         :return:
         """
         self.canvas.delete("all")
-        self.client.send('canvas_clear', '')
+        self.client.send('room:canvas_clear', '')
 
     def activate_button(self, some_button, eraser_mode=False):
         """
@@ -287,7 +263,7 @@ class Game(object):
             self.canvas.create_line(self.old_x, self.old_y, event.x, event.y,
                                     width=self.line_width, fill=paint_color,
                                     capstyle=ROUND, smooth=TRUE, splinesteps=36)
-            self.client.send('canvas_create_line',
+            self.client.send('room:canvas_create_line',
                              f'{self.old_x}:{self.old_y}:{event.x}:{event.y}:{self.line_width}:{paint_color}:'
                              f'{ROUND}:{TRUE}:{36}')
         self.old_x = event.x
