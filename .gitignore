@@ -4,7 +4,7 @@ Server/drawpy.db
 /venv
 /Server/config.ini
 Server/config.ini
-/Srv/config.ini
-Srv/config.ini
-Srv/__pycache__
+/Server/config.ini
+Server/config.ini
+Server/__pycache__
 Client/__pycache__
