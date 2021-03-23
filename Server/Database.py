@@ -14,14 +14,25 @@ class DatabaseConnection:
 
     @staticmethod
     def hash_password(password, salt=uuid.uuid4().hex):
+        """
+        creates a hash and a salt from a password string
+        :param password the password to hash
+        :salt a given or generated salt for the sha512 algorithm
+        """
         hashed_password = hashlib.sha512(password.encode('utf-8') + salt.encode('utf-8')).hexdigest()
         return hashed_password, salt
 
     @property
     def cursor(self):
+        """
+        returns the db connection cursor
+        """
         return self.con.cursor()
 
     def add_user(self, email, password):
+        """
+        add a user to db using Email and check if already exists
+        """
         try:
             (hashed_password, salt) = DatabaseConnection.hash_password(password)
             self.cursor.execute('INSERT INTO users VALUES (?, ?, ?)', [email, hashed_password, salt])
@@ -31,6 +42,9 @@ class DatabaseConnection:
             return "Couldn't add the user as a user with that email already exists"
 
     def validate_user(self, email, password):
+        """
+        check if username and password are correct
+        """
         cursor = self.cursor
         cursor.execute('SELECT email, password, password_salt FROM users WHERE email=?', [email])
         user = cursor.fetchone()
@@ -45,12 +59,18 @@ class DatabaseConnection:
         return False
 
     def get_user_scores(self, email):
+        """
+        get scores of user from db - not in use
+        """
         cursor = self.cursor
         cursor.execute('SELECT score, dt FROM scores WHERE email=?', [email])
 
         return cursor.fetchall()
 
     def get_high_scores(self):
+        """
+        get high scores from db
+        """
         cursor = self.cursor
         cursor.execute('SELECT email, score, dt FROM scores ORDER BY score DESC limit 10')
 
@@ -58,6 +78,9 @@ class DatabaseConnection:
 
 
     def add_scores(self, emails, scores):
+        """
+        add scores of users using emails and time of scoring
+        """
         cursor = self.cursor
 
         for index in range(len(emails)):
@@ -70,4 +93,7 @@ class DatabaseConnection:
 
 
     def close_connection(self):
+        """
+        disconnect the users from the server
+        """
         self.con.close()

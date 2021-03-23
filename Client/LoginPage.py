@@ -35,7 +35,7 @@ class LoginPage(object):
 
     def back(self):
         """
-        goes back
+        goes back to the main menu
         :return:
         """
         self.root.withdraw()
@@ -43,7 +43,7 @@ class LoginPage(object):
 
     def login(self):
         """
-        shows the mainmenu window
+        send a login request to the server, if it succeeds go to the enter security code page
         :return:
         """
         print("Logging in as " + self.email_input.get())

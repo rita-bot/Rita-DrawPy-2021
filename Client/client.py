@@ -9,7 +9,7 @@ import MainMenu
 import RoomPage
 import Game
 
-
+# load the server ip from the config.ini file
 config = configparser.ConfigParser()
 
 if os.path.isfile('config.ini') is not True:
@@ -62,7 +62,7 @@ class Client:
         try:
             leftovers_from_previous_message = ''
             while self.listening_to_server:
-                server_message = leftovers_from_previous_message + str(self.client.recv(4096), encoding='utf-8')
+                server_message = leftovers_from_previous_message + str(self.client.recv(16384), encoding='utf-8')
                 leftovers_from_previous_message = ''
                 if not server_message:
                     self.client.close()
@@ -111,6 +111,11 @@ class Client:
         self.client.send(bytes(f'{self.id},{action},{args}\n', encoding='utf8'))
 
     def send_and_wait(self, action, args=''):
+        """
+        send a message with an action to the socket Server and wait for the server's response
+        :param action: action to send
+        :param args: the action's arguments
+        """
         self.send(action, args)
         server_message = str(self.client.recv(4096), encoding='utf-8')
         if not server_message:

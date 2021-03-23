@@ -92,7 +92,7 @@ class Game(object):
         :param args: the action's arguments
         :return:
         """
-        if action == 'canvas_create_line':
+        if action == 'canvas_create_line' and len(args.split(':')) == 9:
             (old_x, old_y, x, y,
              line_width, paint_color,
              capstyle, smooth, splinesteps) = args.split(':')

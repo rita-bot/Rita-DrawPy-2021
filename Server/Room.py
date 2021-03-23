@@ -18,11 +18,20 @@ class Room:
         self.word = None
 
     def join(self, client_email, client_id, client):
+        """
+        join room and refresh room info
+        :param client_email: the Client email
+        :param client_id: the Client's id
+        """
         self.clients[client_id] = client
         self.clients_emails[client_id] = client_email
         self.notify_other_clients(client_id, 'refresh_room_info')
 
     def leave(self, client_id):
+        """
+        leave room
+        :param client_id: the Client's id
+        """
         self.clients.pop(client_id)
         self.clients_emails.pop(client_id)
 
@@ -46,6 +55,13 @@ class Room:
             self.notify_other_clients(client_id, action, args)
 
     def send(self, client_socket, client_id, action, args=''):
+        """
+        send clients' id
+        :param client_socket: the Client socket
+        :param client_id: the Client id
+        :param action: the action to send a message
+        :param args: the action's arguments
+        """
         client_socket.send(bytes(f'{client_id},{action},{args}\n', encoding='utf8'))
 
     def notify_other_clients(self, client_id, action, args=''):
@@ -89,6 +105,10 @@ class Room:
         self.next_turn()
 
     def notify_all(self, action, args=''):
+        """
+        notify all the clients the game has started
+        :return:
+        """
         for client_id in self.clients:
             client = self.clients[client_id]
             self.send(client, client_id, action, args)
@@ -215,6 +235,7 @@ class Room:
     def player_guessed_word(self, client_socket, player_id, args):
         """
         called when a 'player_guessed_word' message is sent from the Client
+        :param client_socket: the Client socket
         :param player_id: sender(player) id
         :param args: the score to add (time left on the countdown)
         :return:
@@ -225,6 +246,10 @@ class Room:
             self.next_turn()
 
     def get_room_info(self, client_socket, client_id, args):
+        """
+        after the game has finished get the room info +++++++
+        :return:
+        """
         room_info = f"{self.name}:"
         index = 0
         for id in self.clients:

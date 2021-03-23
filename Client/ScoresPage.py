@@ -25,6 +25,10 @@ class ScoresPage(object):
         self.root.mainloop()
 
     def draw_scores(self):
+        """
+        get the scores (if they exist) and present them
+        :return:
+        """
         (origin, action, args) = self.client.send_and_wait('get_high_scores')
 
         if args == '':
@@ -42,7 +46,7 @@ class ScoresPage(object):
 
     def back(self):
         """
-        goes back
+        goes back to the rooms page
         :return:
         """
         self.root.withdraw()

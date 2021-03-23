@@ -43,7 +43,7 @@ class RegisterPage(object):
 
     def register(self):
         """
-        shows the mainmenu window
+        Tries to register a user in the server, if it succeeds - goes to the login page
         :return:
         """
         print("Registering as " + self.email_input.get())

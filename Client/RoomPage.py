@@ -28,6 +28,11 @@ class RoomPage(object):
         self.root.mainloop()
 
     def handle_server_action(self, action, args):
+        """
+        handles a message that was sent from the server
+        :param action: action to send
+        :param args: the action's arguments
+        """
         if action == 'refresh_room_info':
             self.clear_room()
             self.client.send('room:get_room_info')
@@ -35,14 +40,21 @@ class RoomPage(object):
             self.draw_room(action, args)
 
     def draw_room(self, action, args):
+        """
+        create a room ui
+        :param action: action to send
+        :param args: the action's arguments
+        """
         (name, players) = args.split(':')
-        self.room_label = Label(self.root, text=f"Room {name}:", width=10, padx=10, pady=10)
+        self.room_label = Label(self.root, text=f"Room {name}:", width=30, padx=10, pady=10)
         self.room_label.pack(fill=X, pady=20, padx=80)
         self.controls.append(self.room_label)
         players_count = len(players.split('-'))
 
         for player in players.split('-'):
-            choose_room = Label(self.root, text=player, width=10, padx=10, pady=10)
+            player_name = player.split('@')
+            player_name = player_name[0]
+            choose_room = Label(self.root, text=player_name, width=20, padx=10, pady=10)
             choose_room.pack(fill=X, pady=20, padx=80)
             self.controls.append(choose_room)
 
@@ -56,6 +68,9 @@ class RoomPage(object):
         self.leave_room_button.pack(fill=X, pady=20, padx=80)
 
     def clear_room(self):
+        """
+        clear the room ui
+        """
         for control in self.controls:
             control.destroy()
 
@@ -67,9 +82,15 @@ class RoomPage(object):
         self.controls = []
 
     def start_game(self):
+        """
+        send a message to the server to start the game
+        """
         self.client.send('room:start_game')
 
     def leave_room(self):
+        """
+        leave the room
+        """
         self.root.withdraw()
         self.client.send('client_leave_room')
         RoomsPage.RoomsPage(self.client)

@@ -28,6 +28,9 @@ class EnterCodePage(object):
         self.root.mainloop()
 
     def submit_code(self):
+        """
+        submit the code and check if it's correct
+        """
         submitted_code = self.code_input.get()
         (origin, action, args) = self.client.send_and_wait('client_two_factor_code', submitted_code)
 

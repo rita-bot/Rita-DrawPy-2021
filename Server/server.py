@@ -5,7 +5,7 @@ import time
 import TwoFactorAuth
 from Database import DatabaseConnection
 from Room import Room
-from Server.EmailSender import send_email
+from EmailSender import send_email
 
 
 class Server:
@@ -35,14 +35,20 @@ class Server:
         print('Client connected')
         client_id = ''
         try:
+            leftovers_from_previous_message = ''
             while True:
-                client_message = str(client_socket.recv(4096), encoding='utf-8')
+                client_message = leftovers_from_previous_message + str(client_socket.recv(16384), encoding='utf-8')
+                leftovers_from_previous_message = ''
                 if not client_message:
                     break
                 client_messages = list(filter(None, client_message.split('\n')))
                 print(client_messages)
 
                 for message in client_messages:
+                    if len(message.split(',')) != 3:
+                        leftovers_from_previous_message += message
+                        continue
+
                     (client_id, action, args) = message.split(',')
                     self.handle_client_action(client_socket, client_id, action, args)
         except ConnectionResetError:
@@ -59,6 +65,13 @@ class Server:
         print('Client disconnected')
 
     def send(self, client_socket, client_id, action, args=''):
+        """
+        send a message to the client
+        :param client_socket: the Client socket
+        :param client_id: the Client id
+        :param action: the action to send a message
+        :param args: the action's arguments
+        """
         client_socket.send(bytes(f'{client_id},{action},{args}\n', encoding='utf8'))
 
     def handle_client_action(self, client_socket, client_id, action, args):
@@ -76,6 +89,8 @@ class Server:
         elif action == 'client_register':
             self.client_register(client_socket, client_id, action, args)
         elif action.startswith('room:'):
+            if client_id not in self.clients_rooms.keys():
+                return
             room = self.clients_rooms[client_id]
             action = action.replace('room:', '')
             room.handle_client_action(client_socket, client_id, action, args)
@@ -91,6 +106,9 @@ class Server:
             self.get_high_scores(client_socket, client_id, action, args)
 
     def client_register(self, client_socket, client_id, action, args):
+        """
+        register client using Email and password
+        """
         (email, password) = args.split(':')
         db_connection = DatabaseConnection()
         result = db_connection.add_user(email, password)
@@ -103,7 +121,7 @@ class Server:
 
     def client_login(self, client_socket, client_id, action, args):
         """
-        handle a Client's connection action
+        handle a Client's login action
         :param client_socket: the Client socket
         :param client_id: the Client id
         """
@@ -123,6 +141,9 @@ class Server:
             self.send(client_socket, client_id, 'login_failure')
 
     def client_two_factor_code(self, client_socket, client_id, action, args):
+        """
+        check if code is correct and inform the client
+        """
         if self.two_factor_codes[client_id] == args:
             self.clients_connections[client_id] = client_socket
             self.send(client_socket, client_id, 'client_two_factor_code_success')
@@ -130,6 +151,9 @@ class Server:
             self.send(client_socket, client_id, 'client_two_factor_code_failure')
 
     def client_create_room(self, client_socket, client_id, action, room_name):
+        """
+        create a new room for other clients to join
+        """
         room = Room(room_name)
         self.clients_rooms[client_id] = room
         self.rooms[room.id] = room
@@ -137,12 +161,18 @@ class Server:
         self.send(client_socket, client_id, 'room_created')
 
     def client_join_room(self, client_socket, client_id, action, room_id):
+        """
+        join an existing room
+        """
         room = self.rooms[room_id]
         self.clients_rooms[client_id] = room
         room.join(self.clients_emails[client_id], client_id, client_socket)
         self.send(client_socket, client_id, 'joined_room')
 
     def client_leave_room(self, client_socket, client_id, action, args):
+        """
+        leave room and inform the client has left the room
+        """
         room = self.clients_rooms[client_id]
         self.clients_rooms.pop(client_id)
         room.leave(client_id)
@@ -152,6 +182,9 @@ class Server:
         self.send(client_socket, client_id, 'left_room')
 
     def get_rooms_list(self, client_socket, client_id, action, args):
+        """
+        get the list of rooms existing
+        """
         rooms = ''
         index = 0
         for room_id in self.rooms:
@@ -166,6 +199,9 @@ class Server:
         self.send(client_socket, client_id, "rooms_list", rooms)
 
     def get_high_scores(self, client_socket, client_id, action, args):
+        """
+        get the highest scores from all games
+        """
         db_connection = DatabaseConnection()
         scores = db_connection.get_high_scores()
         db_connection.close_connection()
@@ -174,8 +210,10 @@ class Server:
         index = 0
         for score_row in scores:
             (email, score, dt) = score_row
+            player_name = email.split('@')
+            player_name = player_name[0]
             date = dt if len(dt.split(' ')) == 1 else dt.split(' ')[0]
-            response += f"{email} scored {score} at {date}"
+            response += f"{player_name} scored {score} at {date}"
 
             if index != len(scores) - 1:
                 response += '|'

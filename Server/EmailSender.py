@@ -4,6 +4,7 @@ from email.mime.text import MIMEText
 import configparser
 import os.path
 
+# load the config.ini file and take the email username and password from it
 config = configparser.ConfigParser()
 
 if os.path.isfile('config.ini') is not True:
@@ -18,10 +19,15 @@ config.read('config.ini')
 username = config['email']['username']
 password = config['email']['password']
 
-from_address = "from_email@gmail.com"
+from_address = username
 
 
 def send_email(to_address, code):
+    """
+    Sends an email to an address with the secret code
+    :param to_address the address to send the email to
+    :param code the secret code
+    """
     if "@" not in to_address:
         print(f"{to_address} is not a valid email address, not sending the email")
         return
