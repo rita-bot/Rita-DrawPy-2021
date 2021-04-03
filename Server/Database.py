@@ -60,7 +60,7 @@ class DatabaseConnection:
 
     def get_user_scores(self, email):
         """
-        get scores of user from db - not in use
+        get scores of user from db - not in use for now
         """
         cursor = self.cursor
         cursor.execute('SELECT score, dt FROM scores WHERE email=?', [email])

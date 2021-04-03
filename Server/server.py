@@ -5,7 +5,7 @@ import time
 import TwoFactorAuth
 from Database import DatabaseConnection
 from Room import Room
-from EmailSender import send_email
+from Server.EmailSender import send_email
 
 
 class Server:
@@ -35,20 +35,14 @@ class Server:
         print('Client connected')
         client_id = ''
         try:
-            leftovers_from_previous_message = ''
             while True:
-                client_message = leftovers_from_previous_message + str(client_socket.recv(16384), encoding='utf-8')
-                leftovers_from_previous_message = ''
+                client_message = str(client_socket.recv(16384), encoding='utf-8')
                 if not client_message:
                     break
                 client_messages = list(filter(None, client_message.split('\n')))
                 print(client_messages)
 
                 for message in client_messages:
-                    if len(message.split(',')) != 3:
-                        leftovers_from_previous_message += message
-                        continue
-
                     (client_id, action, args) = message.split(',')
                     self.handle_client_action(client_socket, client_id, action, args)
         except ConnectionResetError:
@@ -57,16 +51,30 @@ class Server:
         try:
             self.clients_connections.pop(client_id)
             self.clients_emails.pop(client_id)
-            self.clients_rooms.pop(client_id)
+            self.remove_client_from_room(client_id)
         except:
             pass
 
         client_socket.close()
         print('Client disconnected')
 
+    def notify_other_clients(self, client_id, action, args=''):
+        """
+        notify all other clients besides client_id of an action
+        :param client_id: the Client id
+        :param action: the action to notify of
+        :param args: the action's arguments
+        """
+        for id in self.clients_connections.keys():
+            if id == client_id:
+                continue
+
+            client = self.clients_connections[id]
+            self.send(client, client_id, action, args)
+
     def send(self, client_socket, client_id, action, args=''):
         """
-        send a message to the client
+        send clients' id
         :param client_socket: the Client socket
         :param client_id: the Client id
         :param action: the action to send a message
@@ -89,8 +97,6 @@ class Server:
         elif action == 'client_register':
             self.client_register(client_socket, client_id, action, args)
         elif action.startswith('room:'):
-            if client_id not in self.clients_rooms.keys():
-                return
             room = self.clients_rooms[client_id]
             action = action.replace('room:', '')
             room.handle_client_action(client_socket, client_id, action, args)
@@ -104,11 +110,10 @@ class Server:
             self.get_rooms_list(client_socket, client_id, action, args)
         elif action == 'get_high_scores':
             self.get_high_scores(client_socket, client_id, action, args)
+        elif action == 'empty':
+            self.send(client_socket, client_id, 'empty')
 
     def client_register(self, client_socket, client_id, action, args):
-        """
-        register client using Email and password
-        """
         (email, password) = args.split(':')
         db_connection = DatabaseConnection()
         result = db_connection.add_user(email, password)
@@ -159,6 +164,7 @@ class Server:
         self.rooms[room.id] = room
         room.join(self.clients_emails[client_id], client_id, client_socket)
         self.send(client_socket, client_id, 'room_created')
+        self.notify_other_clients(client_id, 'room_list_refresh')
 
     def client_join_room(self, client_socket, client_id, action, room_id):
         """
@@ -169,16 +175,19 @@ class Server:
         room.join(self.clients_emails[client_id], client_id, client_socket)
         self.send(client_socket, client_id, 'joined_room')
 
-    def client_leave_room(self, client_socket, client_id, action, args):
-        """
-        leave room and inform the client has left the room
-        """
+    def remove_client_from_room(self, client_id):
         room = self.clients_rooms[client_id]
         self.clients_rooms.pop(client_id)
         room.leave(client_id)
         if len(list(room.clients)) == 0:
             self.rooms.pop(room.id)
+            self.notify_other_clients(client_id, 'room_list_refresh')
 
+    def client_leave_room(self, client_socket, client_id, action, args):
+        """
+        leave room and inform the client has left the room
+        """
+        self.remove_client_from_room(client_id)
         self.send(client_socket, client_id, 'left_room')
 
     def get_rooms_list(self, client_socket, client_id, action, args):
@@ -210,8 +219,8 @@ class Server:
         index = 0
         for score_row in scores:
             (email, score, dt) = score_row
-            player_name = email.split('@')
-            player_name = player_name[0]
+            parts = email.split('@')
+            player_name = parts[0]
             date = dt if len(dt.split(' ')) == 1 else dt.split(' ')[0]
             response += f"{player_name} scored {score} at {date}"
 

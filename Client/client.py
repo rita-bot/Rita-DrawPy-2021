@@ -46,10 +46,10 @@ class Client:
     def disconnect(self):
         self.client.close()
 
-    def start_listening(self, current_page):
-        self.current_page = current_page
-        self.listening_to_server = True
-        threading.Thread(target=self.accept_server_message, args=()).start()
+    def start_listening(self):
+        if self.listening_to_server is False:
+            self.listening_to_server = True
+            threading.Thread(target=self.accept_server_message, args=()).start()
 
     def stop_listening(self):
         self.listening_to_server = False
@@ -90,17 +90,18 @@ class Client:
 
     def server_messages_handler(self, action, args):
         if action == 'game_ended':
-            self.stop_listening()
             self.notify_listeners(action, args)
-            self.current_page = RoomPage.RoomPage(self)
-        elif action == 'left_room':
-            self.stop_listening()
+            threading.Thread(target=self.game_ended).start()
         elif action == 'game_starting':
+            self.current_page.remove_server_listener()
             self.current_page.root.withdraw()
             threading.Thread(target=self.start_game_loop, args=(action, args)).start()
             time.sleep(2)
         else:
             self.notify_listeners(action, args)
+
+    def game_ended(self):
+        RoomPage.RoomPage(self)
 
     def send(self, action, args=''):
         """
@@ -123,6 +124,13 @@ class Client:
         print(server_message)
 
         return server_message.replace('\n', '').split(',')
+
+    def send_and_wait_main_thread(self, action, args=''):
+        self.stop_listening()
+        self.send('empty')
+        result = self.send_and_wait(action, args)
+        self.start_listening()
+        return result
 
     def close(self):
         """

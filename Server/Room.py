@@ -34,6 +34,7 @@ class Room:
         """
         self.clients.pop(client_id)
         self.clients_emails.pop(client_id)
+        self.notify_other_clients(client_id, 'refresh_room_info')
 
     def handle_client_action(self, client_socket, client_id, action, args):
         """
