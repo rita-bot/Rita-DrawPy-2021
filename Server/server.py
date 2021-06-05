@@ -5,7 +5,7 @@ import time
 import TwoFactorAuth
 from Database import DatabaseConnection
 from Room import Room
-from Server.EmailSender import send_email
+from EmailSender import send_email
 
 
 class Server:
