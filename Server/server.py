@@ -13,6 +13,7 @@ class Server:
 
     def __init__(self):
         self.clients_connections = {}
+        self.connected_emails = {}
         self.rooms = {}
         self.clients_rooms = {}
         self.clients_emails = {}
@@ -50,6 +51,7 @@ class Server:
 
         try:
             self.clients_connections.pop(client_id)
+            self.connected_emails.pop(self.clients_emails[client_id])
             self.clients_emails.pop(client_id)
             self.remove_client_from_room(client_id)
         except:
@@ -131,6 +133,9 @@ class Server:
         :param client_id: the Client id
         """
         (email, password) = args.split(':')
+        if email in self.connected_emails:
+            self.send(client_socket, client_id, 'login_failure_already_connected')
+            return
         db_connection = DatabaseConnection()
         result = db_connection.validate_user(email, password)
         db_connection.close_connection()
@@ -139,6 +144,7 @@ class Server:
             code = TwoFactorAuth.generate_code()
             self.two_factor_codes[client_id] = code
             self.clients_emails[client_id] = email
+            self.connected_emails[email] = True
             print(f"The code for user {client_id} - {email} is {code}")
             send_email(email, code)
             self.send(client_socket, client_id, 'login_success')

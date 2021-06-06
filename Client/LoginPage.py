@@ -55,5 +55,7 @@ class LoginPage(object):
             self.client.name = email
             self.root.withdraw()
             EnterCodePage.EnterCodePage(self.client)
+        elif action == 'login_failure_already_connected':
+            showinfo("Already connected", "The user is already connected")
         else:
             showinfo("Wrong login credentials", "The email or password you entered are incorrect")
