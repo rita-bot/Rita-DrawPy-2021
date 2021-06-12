@@ -9,6 +9,7 @@ import ScoresPage
 class RoomsPage(object):
     def __init__(self, client):
         self.client = client
+        self.client.listeners = list()
         self.client.listeners.append(self.handle_server_action)
         self.client.start_listening()
         self.rooms_label = None

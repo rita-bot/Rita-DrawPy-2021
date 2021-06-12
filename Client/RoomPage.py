@@ -8,6 +8,7 @@ import Game
 class RoomPage(object):
     def __init__(self, client):
         self.client = client
+        self.client.listeners = list()
         self.client.listeners.append(self.handle_server_action)
         self.client.current_page = self
         self.start_game_button = None

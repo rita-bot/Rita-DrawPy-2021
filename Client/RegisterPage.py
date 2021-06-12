@@ -12,7 +12,7 @@ class RegisterPage(object):
         self.root = Tk()
 
         self.root.eval('tk::PlaceWindow . center')
-        self.root.title('Login')
+        self.root.title('Register')
 
         self.email_label = Label(self.root, text='Email:')
         self.email_label.grid(row=0, column=0, columnspan=1, padx=10, pady=10)
